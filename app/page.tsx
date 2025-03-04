@@ -16,14 +16,35 @@ export default function Home() {
     const fetchPosts = async () => {
       const { data: postsData, error } = await supabase
         .from('posts')
-        .select('*')
+        .select(`
+          *,
+          comments (
+            id,
+            post_id,
+            user_id,
+            content,
+            created_at,
+            profiles (username)
+          )
+        `)
         .order('votes', { ascending: false });
 
       if (error) {
         console.error('Error fetching posts:', error);
       } else {
-        setPosts(postsData || []);
-        setFilteredPosts(postsData || []);
+        const mappedPosts = postsData.map((post: any) => ({
+          ...post,
+          comments: post.comments.map((comment: any) => ({
+            id: comment.id,
+            post_id: comment.post_id,
+            user_id: comment.user_id,
+            content: comment.content,
+            created_at: comment.created_at,
+            username: comment.profiles?.username || 'Anonymous',
+          })),
+        }));
+        setPosts(mappedPosts || []);
+        setFilteredPosts(mappedPosts || []);
       }
       setLoading(false);
     };
@@ -46,9 +67,9 @@ export default function Home() {
   }
 
   return (
-    <div className="flex justify-between min-h-screen ">
-      {/* Left Section: Create Advice (Placeholder) */}
-      {/* <aside className="w-1/3 p-4 bg-white border-r  md:block">
+    <div className="flex justify-between min-h-screen">
+      {/* Left Section: Create Advice (Placeholder) - Commented Out */}
+      {/* <aside className="w-1/3 p-4 bg-white border-r md:block">
         <h2 className="text-2xl font-bold text-gray-800 mb-4">Create Advice</h2>
         <p className="text-gray-600">Form coming soon...</p>
       </aside> */}
@@ -56,15 +77,15 @@ export default function Home() {
       {/* Middle Section: Advice Feed with Search */}
       <main className="w-full md:w-2/3 p-4 overflow-y-auto">
         <h1 className="text-3xl font-bold text-black mb-6 text-center font-poppins">Advice Library</h1>
-        <div className="mb-6">
-          <input 
+        <div className="mb-6 relative">
+          <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search for advice by topic..."
-            className="w-full p-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+            className="w-full p-3 pl-10 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
           />
-          
+          <MdSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
         </div>
         {filteredPosts.length === 0 ? (
           <p className="text-gray-700 text-center">
@@ -80,7 +101,7 @@ export default function Home() {
       </main>
 
       {/* Right Section: Profile/Discover (Placeholder) */}
-      <aside className="w-1/3 p-4  border-l hidden md:block">
+      <aside className="w-1/3 p-4 hidden md:block">
         <h2 className="text-2xl font-bold text-gray-800 mb-4">Profile & Discover</h2>
         <p className="text-gray-600">User info coming soon...</p>
       </aside>

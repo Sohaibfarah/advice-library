@@ -1,13 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { Post } from '../lib/types';
+import { supabase } from '../lib/supabaseClient';
+import { Post, Comment } from '../lib/types';
 
 export function PostCard({ post }: { post: Post }) {
   const [vote, setVote] = useState(post.votes);
   const [upvoted, setUpvoted] = useState(false);
   const [downvoted, setDownvoted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [commentContent, setCommentContent] = useState('');
+  const [comments, setComments] = useState<Comment[]>(post.comments || []);
 
   const handleUpvote = async () => {
     if (loading || upvoted) return;
@@ -29,7 +32,7 @@ export function PostCard({ post }: { post: Post }) {
       setDownvoted(false);
     } catch (error) {
       console.error('Upvote error:', error);
-      setVote(post.votes); // Revert on error
+      setVote(post.votes);
     } finally {
       setLoading(false);
     }
@@ -55,9 +58,41 @@ export function PostCard({ post }: { post: Post }) {
       setUpvoted(false);
     } catch (error) {
       console.error('Downvote error:', error);
-      setVote(post.votes); // Revert on error
+      setVote(post.votes);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCommentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!commentContent.trim()) return;
+
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) {
+      alert('Please log in to comment.');
+      return;
+    }
+
+    const { error, data } = await supabase
+      .from('comments')
+      .insert([{ post_id: post.id, user_id: userData.user.id, content: commentContent }])
+      .select('*, profiles(username)')
+      .single();
+
+    if (error) {
+      console.error('Comment error:', error);
+    } else {
+      const newComment = {
+        id: data.id,
+        post_id: post.id,
+        user_id: userData.user.id,
+        content: commentContent,
+        created_at: new Date().toISOString(),
+        username: data.profiles?.username || 'Anonymous',
+      };
+      setComments([...comments, newComment]);
+      setCommentContent('');
     }
   };
 
@@ -136,9 +171,42 @@ export function PostCard({ post }: { post: Post }) {
             </div>
           </div>
         </div>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-500 mb-4">
           Posted on {post.created_at ? new Date(post.created_at).toLocaleDateString() : 'Unknown'}
         </p>
+        {/* Comments Section */}
+        <div className="mt-4">
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">Comments</h3>
+          {comments.length === 0 ? (
+            <p className="text-gray-600">No comments yet.</p>
+          ) : (
+            <ul className="space-y-2">
+              {comments.map((comment) => (
+                <li key={comment.id} className="border-t pt-2">
+                  <p className="text-gray-700">{comment.content}</p>
+                  <p className="text-sm text-gray-500">
+                    By {comment.username || 'Anonymous'} on {new Date(comment.created_at).toLocaleDateString()}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+          <form onSubmit={handleCommentSubmit} className="mt-4 flex gap-2">
+            <input
+              type="text"
+              value={commentContent}
+              onChange={(e) => setCommentContent(e.target.value)}
+              placeholder="Add a comment..."
+              className="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <button
+              type="submit"
+              className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700"
+            >
+              Post
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
