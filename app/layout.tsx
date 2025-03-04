@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import '../app/globals.css';
+import './globals.css'; // Ensure only one import if globals.css handles fonts
 import { MdHome, MdAddCircle, MdPerson, MdLogout, MdLogin } from 'react-icons/md';
 
 function Navbar() {
@@ -27,41 +27,53 @@ function Navbar() {
   };
 
   return (
-    <nav className="w-64 h-screen bg-blue-600/80 text-white p-6 flex flex-col justify-between">
-      <div>
-        <Link href="/" className="text-2xl font-bold mb-8 block flex items-center gap-2">
-          <MdHome className="w-6 h-6" /> Advice Library
+    <nav className="w-max h-auto text-black p-1 flex flex-col justify-between">
+      <div className="flex flex-col text-center items-center justify-center p-5">
+        <Link href="/" className="text-2xl font-bold mb-8 block flex items-center justify-center gap-2">
+             Advice Library
         </Link>
-        <ul className="space-y-4">
+        <ul className="space-y-4 flex flex-col">
           <li>
-            <Link href="/" className="flex items-center gap-2 hover:underline">
+            <Link
+              href="/"
+              className="flex justify-between bg-white text-black px-8 p-2 hover:bg-fuchsia-500 rounded-md cursor-pointer flex items-center gap-2"
+            >
               <MdHome className="w-5 h-5" /> Home
             </Link>
           </li>
           <li>
-            <Link href="/submit" className="flex items-center gap-2 hover:underline">
-              <MdAddCircle className="w-5 h-5" /> Submit Advice
+            <Link
+              href="/submit"
+              className="flex justify-between bg-white text-black px-8 p-2 hover:bg-fuchsia-500 rounded-md cursor-pointer flex items-center gap-2"
+            >
+              <MdAddCircle className="w-5 h-5" /> New Advice
             </Link>
           </li>
           {user && (
             <li>
-              <Link href="/profile" className="flex items-center gap-2 hover:underline">
+              <Link
+                href="/profile"
+                className="flex justify-between bg-white text-black px-8 p-2 hover:bg-fuchsia-500 rounded-md cursor-pointer items-center gap-2"
+              >
                 <MdPerson className="w-5 h-5" /> Profile
               </Link>
             </li>
           )}
         </ul>
       </div>
-      <div>
+      <div className="bg-red-600 p-5 rounded-md text-white">
         {user ? (
           <button
             onClick={handleLogout}
-            className="w-full text-left flex items-center gap-2 hover:underline"
+            className="w-full text-left hover:underline flex items-center justify-center gap-2"
           >
             <MdLogout className="w-5 h-5" /> Logout
           </button>
         ) : (
-          <Link href="/login" className="flex items-center gap-2 hover:underline">
+          <Link
+            href="/login"
+            className="hover:underline flex items-center justify-center gap-2"
+          >
             <MdLogin className="w-5 h-5" /> Login
           </Link>
         )}
@@ -73,11 +85,8 @@ function Navbar() {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <head>
-        {/* No need for <link> if using globals.css */}
-      </head>
       <body
-        className="flex min-h-screen"
+        className="flex font-poppins"
         style={{
           backgroundImage: "url('/background.jpg')",
           backgroundSize: 'cover',
